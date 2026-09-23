@@ -125,17 +125,32 @@ export function buildFrameLayout(orientation: Orientation, dpi = EXPORT_DPI): Fr
   };
 }
 
+export const MIN_ZOOM = 1;
+export const MAX_ZOOM = 4;
+
+export function clampZoom(zoom: number): number {
+  if (!Number.isFinite(zoom) || zoom < MIN_ZOOM) {
+    return MIN_ZOOM;
+  }
+  if (zoom > MAX_ZOOM) {
+    return MAX_ZOOM;
+  }
+  return zoom;
+}
+
 export function coverSlack(
   imageWidth: number,
   imageHeight: number,
   frameWidth: number,
   frameHeight: number,
+  zoom = MIN_ZOOM,
 ): CoverSlack {
   if (imageWidth <= 0 || imageHeight <= 0 || frameWidth <= 0 || frameHeight <= 0) {
     return { scale: 1, maxPanX: 0, maxPanY: 0 };
   }
 
-  const scale = Math.max(frameWidth / imageWidth, frameHeight / imageHeight);
+  const coverScale = Math.max(frameWidth / imageWidth, frameHeight / imageHeight);
+  const scale = coverScale * clampZoom(zoom);
   return {
     scale,
     maxPanX: Math.max(0, imageWidth * scale - frameWidth),
@@ -150,8 +165,9 @@ export function coverCrop(
   frameHeight: number,
   panX: number,
   panY: number,
+  zoom = MIN_ZOOM,
 ): CoverCrop {
-  const slack = coverSlack(imageWidth, imageHeight, frameWidth, frameHeight);
+  const slack = coverSlack(imageWidth, imageHeight, frameWidth, frameHeight, zoom);
   if (imageWidth <= 0 || imageHeight <= 0 || frameWidth <= 0 || frameHeight <= 0) {
     return { sx: 0, sy: 0, sw: 0, sh: 0 };
   }
@@ -163,6 +179,36 @@ export function coverCrop(
     sy: (slack.maxPanY * clampUnit(panY)) / slack.scale,
     sw,
     sh,
+  };
+}
+
+export function zoomCover(
+  imageWidth: number,
+  imageHeight: number,
+  frameWidth: number,
+  frameHeight: number,
+  panX: number,
+  panY: number,
+  zoom: number,
+  focalX: number,
+  focalY: number,
+  nextZoom: number,
+): { zoom: number; panX: number; panY: number } {
+  const currentZoom = clampZoom(zoom);
+  const targetZoom = clampZoom(nextZoom);
+  const current = coverSlack(imageWidth, imageHeight, frameWidth, frameHeight, currentZoom);
+  const upcoming = coverSlack(imageWidth, imageHeight, frameWidth, frameHeight, targetZoom);
+  const focusX = Math.min(Math.max(focalX, 0), frameWidth);
+  const focusY = Math.min(Math.max(focalY, 0), frameHeight);
+  const sourceX = current.scale === 0 ? 0 : (clampUnit(panX) * current.maxPanX + focusX) / current.scale;
+  const sourceY = current.scale === 0 ? 0 : (clampUnit(panY) * current.maxPanY + focusY) / current.scale;
+  const offsetX = sourceX * upcoming.scale - focusX;
+  const offsetY = sourceY * upcoming.scale - focusY;
+
+  return {
+    zoom: targetZoom,
+    panX: upcoming.maxPanX === 0 ? 0.5 : clampUnit(offsetX / upcoming.maxPanX),
+    panY: upcoming.maxPanY === 0 ? 0.5 : clampUnit(offsetY / upcoming.maxPanY),
   };
 }
 

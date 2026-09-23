@@ -17,6 +17,7 @@ import {
   clampUnit,
   coverSlack,
   orientationOf,
+  zoomCover,
   type Orientation,
 } from './frame-layout';
 import { CAPTION_FONT_FAMILY, paintFrame } from './frame-renderer';
@@ -35,6 +36,7 @@ interface Pan {
 const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const CENTER_PAN: Pan = { x: 0.5, y: 0.5 };
 const KEY_NUDGE_PX = 20;
+const ZOOM_WHEEL_GAIN = 0.002;
 
 @Component({
   selector: 'app-photo-editor',
@@ -50,6 +52,7 @@ export class PhotoEditor {
 
   protected readonly photo = signal<LoadedPhoto | null>(null);
   protected readonly pan = signal<Pan>(CENTER_PAN);
+  protected readonly zoom = signal(1);
   protected readonly dragging = signal(false);
   protected readonly dragOver = signal(false);
   protected readonly errorMessage = signal('');
@@ -102,6 +105,7 @@ export class PhotoEditor {
       write: () => {
         const photo = this.photo();
         const pan = this.pan();
+        const zoom = this.zoom();
         const captions = this.captionModel();
         const layout = this.layout();
         this.fontReady();
@@ -125,6 +129,7 @@ export class PhotoEditor {
           layout,
           pan.x,
           pan.y,
+          zoom,
           captions.left ? formatCaptionDate(captions.left) : '',
           captions.right,
         );
@@ -202,6 +207,7 @@ export class PhotoEditor {
       photo.image.naturalHeight,
       layout.photo.width,
       layout.photo.height,
+      this.zoom(),
     );
     this.pan.set({
       x: slack.maxPanX === 0 ? 0.5 : clampUnit(origin.pan.x - dx / slack.maxPanX),
@@ -212,6 +218,38 @@ export class PhotoEditor {
   protected onPointerUp(): void {
     this.dragOrigin = null;
     this.dragging.set(false);
+  }
+
+  protected onWheel(event: WheelEvent): void {
+    const photo = this.photo();
+    if (!photo) {
+      return;
+    }
+
+    event.preventDefault();
+    const layout = this.layout();
+    const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    if (bounds.width === 0 || bounds.height === 0) {
+      return;
+    }
+
+    const focalX = ((event.clientX - bounds.left) / bounds.width) * layout.photo.width;
+    const focalY = ((event.clientY - bounds.top) / bounds.height) * layout.photo.height;
+    const distance = wheelDistance(event);
+    const next = zoomCover(
+      photo.image.naturalWidth,
+      photo.image.naturalHeight,
+      layout.photo.width,
+      layout.photo.height,
+      this.pan().x,
+      this.pan().y,
+      this.zoom(),
+      focalX,
+      focalY,
+      this.zoom() * Math.exp(-distance * ZOOM_WHEEL_GAIN),
+    );
+    this.zoom.set(next.zoom);
+    this.pan.set({ x: next.panX, y: next.panY });
   }
 
   protected onPreviewKeydown(event: KeyboardEvent): void {
@@ -241,6 +279,7 @@ export class PhotoEditor {
       photo.image.naturalHeight,
       layout.photo.width,
       layout.photo.height,
+      this.zoom(),
     );
     const current = this.pan();
     this.pan.set({
@@ -253,6 +292,7 @@ export class PhotoEditor {
     this.revokePhoto();
     this.photo.set(null);
     this.pan.set(CENTER_PAN);
+    this.zoom.set(1);
     this.dragging.set(false);
     this.dragOrigin = null;
   }
@@ -291,6 +331,7 @@ export class PhotoEditor {
       this.revokePhoto();
       this.photo.set({ image, fileName: file.name, objectUrl });
       this.pan.set(CENTER_PAN);
+      this.zoom.set(1);
       this.errorMessage.set('');
     } catch {
       URL.revokeObjectURL(objectUrl);
@@ -304,6 +345,16 @@ export class PhotoEditor {
       URL.revokeObjectURL(photo.objectUrl);
     }
   }
+}
+
+function wheelDistance(event: WheelEvent): number {
+  if (event.deltaMode === WheelEvent.DOM_DELTA_LINE) {
+    return event.deltaY * 16;
+  }
+  if (event.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
+    return event.deltaY * 400;
+  }
+  return event.deltaY;
 }
 
 function loadImage(url: string): Promise<HTMLImageElement> {

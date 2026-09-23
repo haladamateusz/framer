@@ -34,7 +34,7 @@
           [class.is-dragover]="dragOver()"
           role="application"
           tabindex="0"
-          aria-label="Framed photo. Drag or use arrow keys to reposition."
+          aria-label="Framed photo. Drag or use arrow keys to reposition. Scroll to scale."
           aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"
           (keydown)="onPreviewKeydown($event)"
         >
@@ -50,6 +50,7 @@
             (pointermove)="onPointerMove($event)"
             (pointerup)="onPointerUp()"
             (pointercancel)="onPointerUp()"
+            (wheel)="onWheel($event)"
           >
             <div class="photo-actions">
               <button type="button" class="button button--secondary button--compact" (click)="openPicker()">

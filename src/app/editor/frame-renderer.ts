@@ -10,6 +10,7 @@ export function paintFrame(
   layout: FrameLayout,
   panX: number,
   panY: number,
+  zoom: number,
   leftCaption: string,
   rightCaption: string,
 ): void {
@@ -20,7 +21,7 @@ export function paintFrame(
   ctx.fillStyle = '#000000';
   ctx.fillRect(borderOuter.x, borderOuter.y, borderOuter.width, borderOuter.height);
 
-  const crop = coverCrop(imageWidth, imageHeight, photo.width, photo.height, panX, panY);
+  const crop = coverCrop(imageWidth, imageHeight, photo.width, photo.height, panX, panY, zoom);
   if (crop.sw > 0 && crop.sh > 0) {
     ctx.save();
     ctx.beginPath();

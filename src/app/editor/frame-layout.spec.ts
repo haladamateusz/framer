@@ -5,6 +5,7 @@ import {
   coverCrop,
   mmToPx,
   orientationOf,
+  zoomCover,
 } from './frame-layout';
 
 describe('frame layout', () => {
@@ -55,6 +56,26 @@ describe('frame layout', () => {
     expect(crop.sy).toBeCloseTo(0);
     expect(clampUnit(-0.2)).toBe(0);
     expect(clampUnit(1.4)).toBe(1);
+  });
+
+  it('keeps the opening covered and zooms toward a point', () => {
+    const covered = coverCrop(4000, 2000, 1500, 1000, 0.5, 0.5, 0.2);
+    const minimum = coverCrop(4000, 2000, 1500, 1000, 0.5, 0.5, 1);
+    expect(covered).toEqual(minimum);
+
+    const zoomed = coverCrop(4000, 2000, 1500, 1000, 0.5, 0.5, 2);
+    expect(zoomed.sw).toBeCloseTo(1500);
+    expect(zoomed.sh).toBeCloseTo(1000);
+    expect(zoomed.sx).toBeGreaterThanOrEqual(0);
+    expect(zoomed.sy).toBeGreaterThanOrEqual(0);
+    expect(zoomed.sx + zoomed.sw).toBeLessThanOrEqual(4000);
+    expect(zoomed.sy + zoomed.sh).toBeLessThanOrEqual(2000);
+
+    const shifted = zoomCover(4000, 2000, 1500, 1000, 0.5, 0.5, 1, 0, 500, 2);
+    expect(shifted.zoom).toBe(2);
+    expect(shifted.panX).toBeCloseTo(0.2);
+    expect(shifted.panY).toBeCloseTo(0.5);
+    expect(zoomCover(4000, 2000, 1500, 1000, 0.5, 0.5, 1, 750, 500, 8).zoom).toBe(4);
   });
 
   it('shrinks a caption only when it would cross the center', () => {
