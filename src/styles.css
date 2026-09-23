@@ -1,1 +1,57 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  color-scheme: light;
+  --accent: #a31456;
+  --accent-hover: #861244;
+  --accent-active: #6d0e38;
+  --accent-foreground: #ffffff;
+  --focus: #a31456;
+  --page: #e7e2e8;
+  --text: #241820;
+  --surface: #ffffff;
+  --line: #d8ced4;
+  --secondary: #f3eef1;
+  --secondary-hover: #e7dee4;
+  --secondary-active: #dccfd8;
+  --secondary-text: #241820;
+  --danger: #c41e3a;
+  --danger-hover: #a71932;
+  --danger-active: #8d1429;
+  --danger-foreground: #ffffff;
+  --shadow: rgb(36 24 32 / 12%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --accent: #ff8ec4;
+    --accent-hover: #ffb3d6;
+    --accent-active: #ffd0e6;
+    --accent-foreground: #3a1024;
+    --focus: #ff8ec4;
+    --page: #16141a;
+    --text: #f7f2f5;
+    --surface: #241f28;
+    --line: #4a404a;
+    --secondary: #322b36;
+    --secondary-hover: #3d3542;
+    --secondary-active: #4a4150;
+    --secondary-text: #f7f2f5;
+    --danger: #ff8a9b;
+    --danger-hover: #ffb0bb;
+    --danger-active: #ffd0d6;
+    --danger-foreground: #3a1018;
+    --shadow: rgb(0 0 0 / 40%);
+  }
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--page);
+  color: var(--text);
+}
+
+body {
+  font-family: Geist, sans-serif;
+}

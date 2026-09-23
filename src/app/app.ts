@@ -1,12 +1,10 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component } from '@angular/core';
+
+import { PhotoEditor } from './editor/photo-editor';
 
 @Component({
-  imports: [RouterOutlet],
   selector: 'app-root',
-  styleUrl: './app.css',
-  templateUrl: './app.html',
+  imports: [PhotoEditor],
+  template: '<app-photo-editor />',
 })
-export class App {
-  protected readonly title = signal('photo-cropper');
-}
+export class App {}

@@ -1,0 +1,247 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+  background: var(--page);
+  color: var(--text);
+  font-family: Geist, sans-serif;
+}
+
+.editor {
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+}
+
+.workspace {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.frame {
+  display: flex;
+  width: min(100%, 56rem, calc((100dvh - 14rem) * var(--frame-ratio, 1.5)));
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: 0.7rem;
+  background: var(--surface);
+  padding: 0.8rem 0.9rem;
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+input::placeholder {
+  color: color-mix(in srgb, var(--text) 55%, transparent);
+}
+
+input:focus-visible,
+.button:focus-visible,
+.picker:focus-visible,
+.stage:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.button {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 0;
+  border-radius: 0.7rem;
+  padding: 0.65rem 1rem;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    transform 160ms ease,
+    opacity 160ms ease;
+}
+
+.button svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: none;
+}
+
+.button:hover:not(:disabled) {
+  background: var(--button-hover);
+}
+
+.button:active:not(:disabled) {
+  background: var(--button-active);
+  transform: scale(0.98);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.button--primary {
+  --button-hover: var(--accent-hover);
+  --button-active: var(--accent-active);
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.button--secondary {
+  --button-hover: var(--secondary-hover);
+  --button-active: var(--secondary-active);
+  background: var(--secondary);
+  color: var(--secondary-text);
+}
+
+.button--danger {
+  --button-hover: var(--danger-hover);
+  --button-active: var(--danger-active);
+  background: var(--danger);
+  color: var(--danger-foreground);
+}
+
+.button--compact {
+  min-height: 2.25rem;
+  padding-inline: 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.frame-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.picker {
+  display: flex;
+  width: 100%;
+  aspect-ratio: 15 / 10;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  border: 1px dashed var(--accent);
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--accent) 4%, var(--surface));
+  color: var(--text);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.picker:hover,
+.picker:focus-visible,
+.picker.is-dragover {
+  border-color: var(--accent-hover);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+}
+
+.picker:focus-visible {
+  outline-offset: 2px;
+}
+
+.picker-icon {
+  display: inline-flex;
+  width: 2.6rem;
+  height: 2.6rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+}
+
+.picker-icon svg {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.picker strong {
+  font-size: 0.9rem;
+}
+
+.picker #photoHint {
+  color: color-mix(in srgb, var(--text) 55%, transparent);
+  font-size: 0.76rem;
+}
+
+.stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--frame-aspect);
+  box-shadow: 0 10px 30px var(--shadow);
+}
+
+.stage.is-dragover {
+  outline: 3px solid var(--focus);
+  outline-offset: 4px;
+}
+
+.stage canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.photo-overlay {
+  position: absolute;
+  cursor: grab;
+  touch-action: none;
+}
+
+.photo-overlay.is-dragging {
+  cursor: grabbing;
+}
+
+.photo-actions {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  display: flex;
+  gap: 0.45rem;
+}
+
+.error {
+  min-height: 1.25rem;
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.875rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 640px) {
+  .fields {
+    grid-template-columns: 1fr;
+  }
+}
