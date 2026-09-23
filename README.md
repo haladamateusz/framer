@@ -1,59 +1,31 @@
-# PhotoCropper
+# Photo frame
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.8.
+Frame a photo with a thin black rule, a white mat, and two captions, then download a 300 DPI PNG.
 
-## Development server
+The whole card is 15×10 cm for a landscape photo and 10×15 cm for a portrait photo. Square photos use the landscape card. Inside it, the mat is about 3.3 mm on the top and sides and 9.3 mm on the bottom. Captions are set in [Geist](https://fonts.google.com/specimen/Geist) and align with the outer edge of the black rule.
 
-To start a local development server, run:
+## Use
 
-```bash
-ng serve
-```
+1. Start the app and open `http://localhost:4200/`.
+2. Click **Choose a photo**, or drop a JPEG, PNG, or WebP file onto the opening.
+3. Drag inside the photo, or focus the preview and use the arrow keys, to reposition the crop.
+4. Type a left caption and a right caption in the fields above the card.
+5. Click **Download**, under the card on the right, to save `{original-name}-framed.png`.
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+**Replace** and **Remove** sit on the photo. Remove unloads the photo and keeps the caption text.
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Development
 
 ```bash
-ng generate --help
+npm start
 ```
-
-## Building
-
-To build the project run:
 
 ```bash
-ng build
+npm test
 ```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
 
 ```bash
-ng test
+npm run build
 ```
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+The production build is written to `dist/`. Frame measurements live in `src/app/editor/frame-layout.ts`.
