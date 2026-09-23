@@ -9,7 +9,7 @@ The whole card is 15×10 cm for a landscape photo and 10×15 cm for a portrait p
 1. Start the app and open `http://localhost:4200/`.
 2. Click **Choose a photo**, or drop a JPEG, PNG, or WebP file onto the opening.
 3. Drag inside the photo, or focus the preview and use the arrow keys, to reposition the crop.
-4. Type a left caption and a right caption in the fields above the card.
+4. Choose a date and type a right caption in the fields above the card.
 5. Click **Download**, under the card on the right, to save `{original-name}-framed.png`.
 
 **Replace** and **Remove** sit on the photo. Remove unloads the photo and keeps the caption text.

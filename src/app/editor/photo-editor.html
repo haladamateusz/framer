@@ -13,14 +13,8 @@
     >
       <div class="fields">
         <div class="field">
-          <label class="sr-only" for="leftCaption">Left caption</label>
-          <input
-            id="leftCaption"
-            type="text"
-            autocomplete="off"
-            placeholder="Left caption"
-            [formField]="captionForm.left"
-          />
+          <label class="sr-only" for="captionDate">Date</label>
+          <app-date-picker controlId="captionDate" placeholder="Select date" [formField]="captionForm.left" />
         </div>
         <div class="field">
           <label class="sr-only" for="rightCaption">Right caption</label>

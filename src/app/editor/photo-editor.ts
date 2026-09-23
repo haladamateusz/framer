@@ -10,6 +10,8 @@ import {
 } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 
+import { DatePicker, formatCaptionDate } from './date-picker';
+
 import {
   buildFrameLayout,
   clampUnit,
@@ -36,7 +38,7 @@ const KEY_NUDGE_PX = 20;
 
 @Component({
   selector: 'app-photo-editor',
-  imports: [FormField],
+  imports: [FormField, DatePicker],
   templateUrl: './photo-editor.html',
   styleUrl: './photo-editor.css',
 })
@@ -123,7 +125,7 @@ export class PhotoEditor {
           layout,
           pan.x,
           pan.y,
-          captions.left,
+          captions.left ? formatCaptionDate(captions.left) : '',
           captions.right,
         );
       },
