@@ -77,9 +77,10 @@ function parseLocalDateValue(value: string): Date | null {
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   host: {
     '(document:pointerdown)': 'onDocumentPointerDown($event)',
+    '(document:pointerup)': 'onDocumentPointerUp()',
     '(document:wheel)': 'onDocumentScrollIntent($event)',
     '(document:touchmove)': 'onDocumentScrollIntent($event)',
-    '(window:scroll)': 'close()',
+    '(window:scroll)': 'onWindowScroll()',
     '(focusout)': 'onFocusOut($event)',
   },
 })
@@ -89,6 +90,7 @@ export class DatePicker implements FormValueControl<string> {
   private readonly isBrowser = isPlatformBrowser(this.platformId);
   private readonly trigger = viewChild<ElementRef<HTMLButtonElement>>('trigger');
   private readonly calendar = viewChild<ElementRef<CalendarDateElement>>('calendar');
+  private pointerInside = false;
 
   readonly value = model.required<string>();
   readonly controlId = input.required<string>();
@@ -154,13 +156,33 @@ export class DatePicker implements FormValueControl<string> {
   }
 
   protected onDocumentPointerDown(event: PointerEvent): void {
-    if (!this.elementRef.nativeElement.contains(event.target as Node)) {
+    this.pointerInside = this.containsEventTarget(event.target);
+
+    if (!this.pointerInside) {
       this.close();
     }
   }
 
+  protected onDocumentPointerUp(): void {
+    window.setTimeout(() => {
+      this.pointerInside = false;
+    });
+  }
+
   protected onDocumentScrollIntent(event: Event): void {
-    if (event.target instanceof Node && this.elementRef.nativeElement.contains(event.target)) {
+    if (this.containsEventTarget(event.target)) {
+      return;
+    }
+
+    if (event.type === 'touchmove' && this.pointerInside) {
+      return;
+    }
+
+    this.close();
+  }
+
+  protected onWindowScroll(): void {
+    if (this.pointerInside || this.focusIsInside() || this.isCoarsePointer()) {
       return;
     }
 
@@ -170,10 +192,19 @@ export class DatePicker implements FormValueControl<string> {
   protected onFocusOut(event: FocusEvent): void {
     const nextTarget = event.relatedTarget;
 
-    if (!(nextTarget instanceof Node) || !this.elementRef.nativeElement.contains(nextTarget)) {
-      this.close();
-      this.touch.emit();
+    if (nextTarget instanceof Node && this.elementRef.nativeElement.contains(nextTarget)) {
+      return;
     }
+
+    // Month buttons and the year menu live in the calendar shadow tree.
+    // WebKit reports that focus move with a null relatedTarget, which used
+    // to dismiss the dialog before the month or year could change.
+    if (nextTarget === null && this.containsEventTarget(event.target)) {
+      return;
+    }
+
+    this.close();
+    this.touch.emit();
   }
 
   focus(options?: FocusOptions): void {
@@ -190,6 +221,18 @@ export class DatePicker implements FormValueControl<string> {
     this.yearCount.set(selectableYearCount(today.getFullYear()));
     this.isOpen.set(true);
     this.focusCalendar();
+  }
+
+  private containsEventTarget(target: EventTarget | null): boolean {
+    return target instanceof Node && this.elementRef.nativeElement.contains(target);
+  }
+
+  private focusIsInside(): boolean {
+    return this.containsEventTarget(document.activeElement);
+  }
+
+  private isCoarsePointer(): boolean {
+    return window.matchMedia?.('(pointer: coarse)').matches ?? false;
   }
 
   private focusCalendar(): void {
