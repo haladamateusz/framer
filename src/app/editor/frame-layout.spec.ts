@@ -78,6 +78,36 @@ describe('frame layout', () => {
     expect(zoomCover(4000, 2000, 1500, 1000, 0.5, 0.5, 1, 750, 500, 8).zoom).toBe(4);
   });
 
+  it('covers a portrait photo and stays covered when zooming back out', () => {
+    const crop = coverCrop(2000, 4000, 1000, 1500, 0.5, 0.5);
+
+    expect(crop.sw).toBeCloseTo(2000);
+    expect(crop.sh).toBeCloseTo(3000);
+    expect(crop.sx).toBeCloseTo(0);
+    expect(crop.sy).toBeCloseTo(500);
+
+    const zoomedOut = zoomCover(4000, 2000, 1500, 1000, 0, 0, 2, 0, 0, 0.5);
+    expect(zoomedOut.zoom).toBe(1);
+    expect(zoomedOut.panX).toBeCloseTo(0);
+    expect(zoomedOut.panY).toBeCloseTo(0.5);
+
+    const covered = coverCrop(
+      4000,
+      2000,
+      1500,
+      1000,
+      zoomedOut.panX,
+      zoomedOut.panY,
+      zoomedOut.zoom,
+    );
+    expect(covered.sx).toBeGreaterThanOrEqual(0);
+    expect(covered.sy).toBeGreaterThanOrEqual(0);
+    expect(covered.sx + covered.sw).toBeLessThanOrEqual(4000);
+    expect(covered.sy + covered.sh).toBeLessThanOrEqual(2000);
+    expect(covered.sw).toBeCloseTo(3000);
+    expect(covered.sh).toBeCloseTo(2000);
+  });
+
   it('shrinks a caption only when it would cross the center', () => {
     expect(captionFontScale(80, 120)).toBe(1);
     expect(captionFontScale(200, 100)).toBeCloseTo(0.5);
