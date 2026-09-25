@@ -20,7 +20,7 @@ import {
   zoomCover,
   type Orientation,
 } from './frame-layout';
-import { CAPTION_FONT_FAMILY, paintFrame } from './frame-renderer';
+import { paintFrame } from './frame-renderer';
 
 interface LoadedPhoto {
   image: HTMLImageElement;
@@ -304,19 +304,27 @@ export class PhotoEditor {
       return;
     }
 
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        this.errorMessage.set('The framed photo could not be created.');
-        return;
-      }
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      const baseName = photo.fileName.replace(/\.[^.]+$/, '') || 'photo';
-      anchor.href = url;
-      anchor.download = `${baseName}-framed.png`;
-      anchor.click();
-      URL.revokeObjectURL(url);
-    }, 'image/png');
+    const baseName = photo.fileName.replace(/\.[^.]+$/, '') || 'photo';
+    const fileName = `${baseName}-framed.png`;
+    let blob: Blob;
+    try {
+      blob = blobFromDataUrl(canvas.toDataURL('image/png'));
+    } catch {
+      this.errorMessage.set('The framed photo could not be created.');
+      return;
+    }
+
+    const file = new File([blob], fileName, { type: 'image/png' });
+    if (canSaveToGallery(file)) {
+      void navigator.share({ files: [file] }).catch((error: unknown) => {
+        if (!isShareAbort(error)) {
+          downloadFile(blob, fileName);
+        }
+      });
+      return;
+    }
+
+    downloadFile(blob, fileName);
   }
 
   private async loadFile(file: File): Promise<void> {
@@ -335,7 +343,9 @@ export class PhotoEditor {
       this.errorMessage.set('');
     } catch {
       URL.revokeObjectURL(objectUrl);
-      this.errorMessage.set('That file could not be opened. Please choose a JPEG, PNG, or WebP image.');
+      this.errorMessage.set(
+        'That file could not be opened. Please choose a JPEG, PNG, or WebP image.',
+      );
     }
   }
 
@@ -355,6 +365,41 @@ function wheelDistance(event: WheelEvent): number {
     return event.deltaY * 400;
   }
   return event.deltaY;
+}
+
+function canSaveToGallery(file: File): boolean {
+  return (
+    window.matchMedia('(pointer: coarse)').matches &&
+    typeof navigator.share === 'function' &&
+    navigator.canShare?.({ files: [file] }) === true
+  );
+}
+
+function isShareAbort(error: unknown): boolean {
+  return error instanceof Error && error.name === 'AbortError';
+}
+
+function blobFromDataUrl(dataUrl: string): Blob {
+  const [header, data] = dataUrl.split(',');
+  if (!header || !data) {
+    throw new Error('empty image');
+  }
+  const mime = /:(.*?);/.exec(header)?.[1] ?? 'image/png';
+  const binary = atob(data);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return new Blob([bytes], { type: mime });
+}
+
+function downloadFile(blob: Blob, fileName: string): void {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 function loadImage(url: string): Promise<HTMLImageElement> {
