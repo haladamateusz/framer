@@ -101,7 +101,9 @@ export class DatePicker implements FormValueControl<string> {
   protected readonly maxDate = signal(toLocalIsoDate(new Date()));
   protected readonly yearCount = signal(selectableYearCount(new Date().getFullYear()));
   protected readonly panelId = computed(() => `${this.controlId()}-dialog`);
-  protected readonly displayValue = computed(() => formatCaptionDate(this.value()) || this.placeholder());
+  protected readonly displayValue = computed(
+    () => formatCaptionDate(this.value()) || this.placeholder(),
+  );
 
   constructor() {
     if (this.isBrowser) {

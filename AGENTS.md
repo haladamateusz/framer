@@ -80,16 +80,16 @@ The `<type>` and `<short summary>` fields are mandatory. The `(<scope>)` field i
 
 Must be one of the following:
 
-| Type | Description |
-| --- | --- |
-| `build` | Changes that affect the build system, deployment tooling, or external dependencies. |
-| `ci` | Changes to CI configuration files and scripts. |
-| `docs` | Documentation-only changes. |
-| `feat` | A new feature. |
-| `fix` | A bug fix. |
-| `perf` | A code change that improves performance. |
-| `refactor` | A code change that neither fixes a bug nor adds a feature. |
-| `test` | Adding missing tests or correcting existing tests. |
+| Type       | Description                                                                         |
+| ---------- | ----------------------------------------------------------------------------------- |
+| `build`    | Changes that affect the build system, deployment tooling, or external dependencies. |
+| `ci`       | Changes to CI configuration files and scripts.                                      |
+| `docs`     | Documentation-only changes.                                                         |
+| `feat`     | A new feature.                                                                      |
+| `fix`      | A bug fix.                                                                          |
+| `perf`     | A code change that improves performance.                                            |
+| `refactor` | A code change that neither fixes a bug nor adds a feature.                          |
+| `test`     | Adding missing tests or correcting existing tests.                                  |
 
 #### Scope (optional)
 

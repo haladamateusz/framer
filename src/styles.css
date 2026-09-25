@@ -3,11 +3,11 @@
   --accent: #a31456;
   --accent-hover: #861244;
   --accent-active: #6d0e38;
-  --accent-foreground: #ffffff;
+  --accent-foreground: #fff;
   --focus: #a31456;
   --page: #e7e2e8;
   --text: #241820;
-  --surface: #ffffff;
+  --surface: #fff;
   --line: #d8ced4;
   --secondary: #f3eef1;
   --secondary-hover: #e7dee4;
@@ -16,7 +16,7 @@
   --danger: #c41e3a;
   --danger-hover: #a71932;
   --danger-active: #8d1429;
-  --danger-foreground: #ffffff;
+  --danger-foreground: #fff;
   --shadow: rgb(36 24 32 / 12%);
 }
 
