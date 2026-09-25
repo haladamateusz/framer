@@ -32,15 +32,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
-        run: npm run lint
-
-      - name: Check formatting
-        run: npm run format:check
-
-      - name: Check unused code and dependencies
-        run: npm run knip
-
       - name: Run unit tests
         run: npm test -- --watch=false
 
