@@ -100,6 +100,7 @@ input:focus-visible,
 .button--primary {
   --button-hover: var(--accent-hover);
   --button-active: var(--accent-active);
+
   background: var(--accent);
   color: var(--accent-foreground);
 }
@@ -107,6 +108,7 @@ input:focus-visible,
 .button--secondary {
   --button-hover: var(--secondary-hover);
   --button-active: var(--secondary-active);
+
   background: var(--secondary);
   color: var(--secondary-text);
 }
@@ -114,6 +116,7 @@ input:focus-visible,
 .button--danger {
   --button-hover: var(--danger-hover);
   --button-active: var(--danger-active);
+
   background: var(--danger);
   color: var(--danger-foreground);
 }
@@ -179,7 +182,7 @@ input:focus-visible,
   font-size: 0.9rem;
 }
 
-.picker #photoHint {
+.picker .photo-hint {
   color: color-mix(in srgb, var(--text) 55%, transparent);
   font-size: 0.76rem;
 }
