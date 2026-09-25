@@ -1,15 +1,15 @@
-export const EXPORT_DPI = 300;
-export const CARD_LONG_MM = 150;
-export const CARD_SHORT_MM = 100;
-export const BORDER_MM = 0.6;
-export const PAD_TOP_MM = 10 / 3;
-export const PAD_SIDE_MM = 10 / 3;
-export const PAD_BOTTOM_MM = 28 / 3;
-export const CAPTION_SIZE_MM = 3.5;
+const EXPORT_DPI = 300;
+const CARD_LONG_MM = 150;
+const CARD_SHORT_MM = 100;
+const BORDER_MM = 0.6;
+const PAD_TOP_MM = 10 / 3;
+const PAD_SIDE_MM = 10 / 3;
+const PAD_BOTTOM_MM = 28 / 3;
+const CAPTION_SIZE_MM = 3.5;
 
 export type Orientation = 'landscape' | 'portrait';
 
-export interface FrameSpec {
+interface FrameSpec {
   orientation: Orientation;
   cardWidthMm: number;
   cardHeightMm: number;
@@ -20,7 +20,7 @@ export interface FrameSpec {
   captionSizeMm: number;
 }
 
-export interface Rect {
+interface Rect {
   x: number;
   y: number;
   width: number;
@@ -61,7 +61,7 @@ export function orientationOf(width: number, height: number): Orientation {
   return width >= height ? 'landscape' : 'portrait';
 }
 
-export function frameSpec(orientation: Orientation): FrameSpec {
+function frameSpec(orientation: Orientation): FrameSpec {
   const landscape = orientation === 'landscape';
   return {
     orientation,
@@ -125,10 +125,10 @@ export function buildFrameLayout(orientation: Orientation, dpi = EXPORT_DPI): Fr
   };
 }
 
-export const MIN_ZOOM = 1;
-export const MAX_ZOOM = 4;
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 4;
 
-export function clampZoom(zoom: number): number {
+function clampZoom(zoom: number): number {
   if (!Number.isFinite(zoom) || zoom < MIN_ZOOM) {
     return MIN_ZOOM;
   }
@@ -200,8 +200,10 @@ export function zoomCover(
   const upcoming = coverSlack(imageWidth, imageHeight, frameWidth, frameHeight, targetZoom);
   const focusX = Math.min(Math.max(focalX, 0), frameWidth);
   const focusY = Math.min(Math.max(focalY, 0), frameHeight);
-  const sourceX = current.scale === 0 ? 0 : (clampUnit(panX) * current.maxPanX + focusX) / current.scale;
-  const sourceY = current.scale === 0 ? 0 : (clampUnit(panY) * current.maxPanY + focusY) / current.scale;
+  const sourceX =
+    current.scale === 0 ? 0 : (clampUnit(panX) * current.maxPanX + focusX) / current.scale;
+  const sourceY =
+    current.scale === 0 ? 0 : (clampUnit(panY) * current.maxPanY + focusY) / current.scale;
   const offsetX = sourceX * upcoming.scale - focusX;
   const offsetY = sourceY * upcoming.scale - focusY;
 

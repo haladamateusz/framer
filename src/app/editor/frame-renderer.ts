@@ -1,6 +1,6 @@
 import { captionFontScale, coverCrop, type FrameLayout } from './frame-layout';
 
-export const CAPTION_FONT_FAMILY = 'Geist, sans-serif';
+const CAPTION_FONT_FAMILY = 'Geist, sans-serif';
 
 export function paintFrame(
   ctx: CanvasRenderingContext2D,
