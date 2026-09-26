@@ -18,6 +18,7 @@
   --danger-active: #8d1429;
   --danger-foreground: #fff;
   --shadow: rgb(36 24 32 / 12%);
+  --navbar-height: 3.25rem;
 }
 
 @media (prefers-color-scheme: dark) {
