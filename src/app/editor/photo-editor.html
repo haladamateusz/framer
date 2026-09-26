@@ -37,7 +37,7 @@
           [class.is-dragover]="dragOver()"
           role="application"
           tabindex="0"
-          aria-label="Framed photo. Drag or use arrow keys to reposition. Scroll to scale."
+          [attr.aria-label]="stageLabel()"
           aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"
           (keydown)="onPreviewKeydown($event)"
         >
@@ -55,6 +55,7 @@
             (pointercancel)="onPointerUp()"
             (wheel)="onWheel($event)"
           >
+            <p class="photo-name" aria-hidden="true">{{ photo()!.fileName }}</p>
             <div class="photo-actions">
               <button
                 type="button"
@@ -103,7 +104,7 @@
           </span>
           <strong>Choose a photo</strong>
           <span id="photo-hint" class="photo-hint"
-            >JPEG, PNG, or WebP. You can also drop a file here.</span
+            >JPEG, PNG, WebP, or HEIC. You can also drop a file here.</span
           >
         </button>
       }
@@ -127,7 +128,13 @@
           Download
         </button>
       </div>
-      <div class="error" aria-live="polite">{{ errorMessage() }}</div>
+      <div
+        class="error"
+        [class.is-pending]="errorMessage() === '' && pendingMessage() !== ''"
+        aria-live="polite"
+      >
+        {{ errorMessage() || pendingMessage() }}
+      </div>
     </div>
   </main>
 
@@ -136,7 +143,7 @@
     id="photoFile"
     class="sr-only"
     type="file"
-    accept="image/jpeg,image/png,image/webp"
+    accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
     (change)="onFileSelected($event)"
   />
 </div>

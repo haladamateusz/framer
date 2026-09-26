@@ -11,6 +11,8 @@ import {
 import { form, FormField } from '@angular/forms/signals';
 
 import { DatePicker, formatCaptionDate } from './date-picker';
+import { HEIC_DECODER } from './heic-image';
+import { isAcceptedPhoto, isHeic, readCreatedDate } from './photo-created-date';
 
 import {
   buildFrameLayout,
@@ -33,7 +35,6 @@ interface Pan {
   y: number;
 }
 
-const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const CENTER_PAN: Pan = { x: 0.5, y: 0.5 };
 const KEY_NUDGE_PX = 20;
 const ZOOM_WHEEL_GAIN = 0.002;
@@ -46,9 +47,11 @@ const ZOOM_WHEEL_GAIN = 0.002;
 })
 export class PhotoEditor {
   private readonly destroyRef = inject(DestroyRef);
+  private readonly decodeHeic = inject(HEIC_DECODER);
   private readonly canvas = viewChild<ElementRef<HTMLCanvasElement>>('preview');
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
   private dragOrigin: { x: number; y: number; pan: Pan } | null = null;
+  private loadId = 0;
 
   protected readonly photo = signal<LoadedPhoto | null>(null);
   protected readonly pan = signal<Pan>(CENTER_PAN);
@@ -56,6 +59,7 @@ export class PhotoEditor {
   protected readonly dragging = signal(false);
   protected readonly dragOver = signal(false);
   protected readonly errorMessage = signal('');
+  protected readonly pendingMessage = signal('');
   protected readonly fontReady = signal(false);
   protected readonly captionModel = signal({ left: '', right: '' });
   protected readonly captionForm = form(this.captionModel);
@@ -73,6 +77,11 @@ export class PhotoEditor {
   protected readonly frameAspect = computed(() => {
     const { width, height } = this.layout().canvas;
     return `${width} / ${height}`;
+  });
+
+  protected readonly stageLabel = computed(() => {
+    const fileName = this.photo()?.fileName ?? 'photo';
+    return `Framed photo, ${fileName}. Drag or use arrow keys to reposition. Scroll to scale.`;
   });
 
   protected readonly frameRatio = computed(() => {
@@ -328,24 +337,93 @@ export class PhotoEditor {
   }
 
   private async loadFile(file: File): Promise<void> {
-    if (!ACCEPTED_TYPES.has(file.type)) {
-      this.errorMessage.set('Please choose a JPEG, PNG, or WebP image.');
+    if (!isAcceptedPhoto(file)) {
+      this.pendingMessage.set('');
+      this.errorMessage.set('Please choose a JPEG, PNG, WebP, or HEIC image.');
       return;
     }
 
-    const objectUrl = URL.createObjectURL(file);
+    const loadId = ++this.loadId;
+    this.pendingMessage.set('');
+    this.errorMessage.set('');
+    const createdDate = readCreatedDate(file);
     try {
-      const image = await loadImage(objectUrl);
+      const display = await this.openDisplayImage(file, () => {
+        if (loadId === this.loadId) {
+          this.pendingMessage.set('Opening HEIC photo…');
+        }
+      });
+      if (loadId !== this.loadId) {
+        URL.revokeObjectURL(display.objectUrl);
+        return;
+      }
+
       this.revokePhoto();
-      this.photo.set({ image, fileName: file.name, objectUrl });
+      this.photo.set({ image: display.image, fileName: file.name, objectUrl: display.objectUrl });
       this.pan.set(CENTER_PAN);
       this.zoom.set(1);
+      this.pendingMessage.set('');
       this.errorMessage.set('');
+      this.useCreatedDate(await createdDate, loadId);
     } catch {
-      URL.revokeObjectURL(objectUrl);
+      if (loadId !== this.loadId) {
+        return;
+      }
+
+      this.pendingMessage.set('');
+      if (isHeic(file)) {
+        const date = await createdDate;
+        if (loadId !== this.loadId) {
+          return;
+        }
+
+        if (this.photo() === null) {
+          this.useCreatedDate(date, loadId);
+        }
+        this.errorMessage.set(
+          this.photo() === null && date
+            ? 'This browser cannot display HEIC photos. The created date was filled in from the file.'
+            : 'This browser cannot display HEIC photos.',
+        );
+        return;
+      }
+
       this.errorMessage.set(
-        'That file could not be opened. Please choose a JPEG, PNG, or WebP image.',
+        'That file could not be opened. Please choose a JPEG, PNG, WebP, or HEIC image.',
       );
+    }
+  }
+
+  private useCreatedDate(isoDate: string | null, loadId: number): void {
+    if (!isoDate || loadId !== this.loadId) {
+      return;
+    }
+
+    this.captionModel.update((current) => ({ ...current, left: isoDate }));
+  }
+
+  private async openDisplayImage(
+    file: File,
+    onConvert: () => void,
+  ): Promise<{ image: HTMLImageElement; objectUrl: string }> {
+    const objectUrl = URL.createObjectURL(file);
+    try {
+      return { image: await loadImage(objectUrl), objectUrl };
+    } catch (error) {
+      URL.revokeObjectURL(objectUrl);
+      if (!isHeic(file)) {
+        throw error;
+      }
+    }
+
+    onConvert();
+    const jpeg = await this.decodeHeic(file);
+    const convertedUrl = URL.createObjectURL(jpeg);
+    try {
+      return { image: await loadImage(convertedUrl), objectUrl: convertedUrl };
+    } catch (error) {
+      URL.revokeObjectURL(convertedUrl);
+      throw error;
     }
   }
 

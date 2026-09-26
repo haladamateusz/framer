@@ -1,7 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, vi } from 'vitest';
 
+import { HEIC_DECODER } from './heic-image';
 import { PhotoEditor } from './photo-editor';
+import { heicWithExifDate, jpegWithExifDate } from './photo-exif-fixture';
+
+const decodeHeic = vi.fn<(file: Blob) => Promise<Blob>>();
 
 describe('PhotoEditor', () => {
   let fixture: ComponentFixture<PhotoEditor>;
@@ -11,8 +15,12 @@ describe('PhotoEditor', () => {
     vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
     vi.stubGlobal('Image', FakeImage);
 
+    decodeHeic.mockReset();
+    decodeHeic.mockRejectedValue(new Error('decode'));
+
     await TestBed.configureTestingModule({
       imports: [PhotoEditor],
+      providers: [{ provide: HEIC_DECODER, useValue: decodeHeic }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(PhotoEditor);
@@ -20,6 +28,7 @@ describe('PhotoEditor', () => {
   });
 
   afterEach(() => {
+    FakeImage.failNext = false;
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
@@ -28,8 +37,101 @@ describe('PhotoEditor', () => {
     chooseFile(fileInput(fixture), new File(['notes'], 'notes.txt', { type: 'text/plain' }));
     await fixture.whenStable();
 
-    expect(text(fixture)).toContain('Please choose a JPEG, PNG, or WebP image.');
+    expect(text(fixture)).toContain('Please choose a JPEG, PNG, WebP, or HEIC image.');
     expect(text(fixture)).toContain('Choose a photo');
+  });
+
+  it('shows the file name on the photo', async () => {
+    await loadPortrait(fixture);
+
+    const name = fixture.nativeElement.querySelector('.photo-name');
+    expect(name?.textContent).toBe('dog.png');
+  });
+
+  it('fills the date from the photo capture date', async () => {
+    chooseFile(
+      fileInput(fixture),
+      jpegWithExifDate('pier.jpg', [{ tag: 0x9003, value: '2024:06:15 10:30:00' }]),
+    );
+
+    await vi.waitFor(() => {
+      expect(text(fixture)).toContain('15 czerwca 2024');
+    });
+  });
+
+  it('shows a HEIC photo the browser can decode directly', async () => {
+    chooseFile(
+      fileInput(fixture),
+      heicWithExifDate('pier.heic', [{ tag: 0x9004, value: '2023:01:02 08:00:00' }]),
+    );
+
+    await vi.waitFor(() => {
+      expect(text(fixture)).toContain('2 stycznia 2023');
+    });
+
+    expect(decodeHeic).not.toHaveBeenCalled();
+    expect(text(fixture)).toContain('pier.heic');
+    expect(text(fixture)).toContain('Remove');
+  });
+
+  it('converts a HEIC photo when the browser cannot decode it', async () => {
+    decodeHeic.mockResolvedValue(new Blob(['jpeg'], { type: 'image/jpeg' }));
+    FakeImage.failNext = true;
+    chooseFile(
+      fileInput(fixture),
+      heicWithExifDate('pier.heic', [{ tag: 0x9004, value: '2023:01:02 08:00:00' }]),
+    );
+
+    await vi.waitFor(() => {
+      expect(text(fixture)).toContain('2 stycznia 2023');
+    });
+
+    expect(decodeHeic).toHaveBeenCalledOnce();
+    expect(text(fixture)).toContain('pier.heic');
+    expect(text(fixture)).toContain('Remove');
+    expect(text(fixture)).not.toContain('cannot display HEIC');
+  });
+
+  it('fills the date from a HEIC file this browser cannot display', async () => {
+    FakeImage.failNext = true;
+    chooseFile(
+      fileInput(fixture),
+      heicWithExifDate('pier.heic', [{ tag: 0x9004, value: '2023:01:02 08:00:00' }]),
+    );
+
+    await vi.waitFor(() => {
+      expect(text(fixture)).toContain('2 stycznia 2023');
+    });
+    expect(text(fixture)).toContain(
+      'This browser cannot display HEIC photos. The created date was filled in from the file.',
+    );
+    expect(text(fixture)).toContain('Choose a photo');
+  });
+
+  it('keeps the current photo when a HEIC file cannot be displayed', async () => {
+    state(fixture).captionModel.set({ left: '2026-09-12', right: '' });
+    await loadPortrait(fixture);
+
+    FakeImage.failNext = true;
+    chooseFile(
+      fileInput(fixture),
+      heicWithExifDate('pier.heic', [{ tag: 0x9004, value: '2023:01:02 08:00:00' }]),
+    );
+
+    await vi.waitFor(() => {
+      expect(text(fixture)).toContain('This browser cannot display HEIC photos.');
+    });
+
+    expect(text(fixture)).toContain('12 września 2026');
+    expect(text(fixture)).not.toContain('2 stycznia 2023');
+    expect(text(fixture)).toContain('Remove');
+  });
+
+  it('keeps a chosen date when the photo has no created date', async () => {
+    state(fixture).captionModel.set({ left: '2026-09-12', right: '' });
+    await loadPortrait(fixture);
+
+    expect(text(fixture)).toContain('12 września 2026');
   });
 
   it('keeps the date when the photo is removed', async () => {
@@ -51,7 +153,9 @@ describe('PhotoEditor', () => {
     stubCoarsePointer(true);
     const share = vi.fn().mockResolvedValue(undefined);
     const restoreShare = stubShare(share);
-    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+    const click = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined);
 
     button(fixture, 'Download').click();
     await fixture.whenStable();
@@ -183,11 +287,19 @@ async function loadPortrait(fixture: ComponentFixture<PhotoEditor>): Promise<voi
 }
 
 class FakeImage {
+  static failNext = false;
   naturalWidth = 800;
   naturalHeight = 1200;
   onload: (() => void) | null = null;
+  onerror: (() => void) | null = null;
 
   set src(_value: string) {
+    if (FakeImage.failNext) {
+      FakeImage.failNext = false;
+      this.onerror?.();
+      return;
+    }
+
     this.onload?.();
   }
 }
